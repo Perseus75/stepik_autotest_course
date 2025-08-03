@@ -1,63 +1,30 @@
-import urllib.request
-from urllib.error import HTTPError
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
+import math
+import time
 
-# Настройки для headless режима
-options = Options()
-#options.add_argument("--headless")
+def calc(x):
+  return str(math.log(abs(12*math.sin(int(x)))))
 
-# Инициализация драйвера Chrome
-service = ChromeService()
-driver = webdriver.Chrome(service=service, options=options)
+browser = webdriver.Chrome()
 
-driver.maximize_window()
+browser.get("http://suninjuly.github.io/explicit_wait2.html")
 
-# URL целевой страницы
-url = "https://www.sravni.ru/biznes-marketplace/info/top-marketplejsov-rossii-i-mira/"
-driver.get(url)
+# говорим Selenium проверять в течение 5 секунд, пока кнопка не станет кликабельной
+locator = (By.ID, "price")
+WebDriverWait(browser, 12).until(
+        EC.text_to_be_present_in_element(locator, '$100')
+    )
+button = browser.find_element(By.ID, "book")
+button.click()
 
-# Создание папки для сохранения изображений
-SAVE_DIR = "yandex_images"
-os.makedirs(SAVE_DIR, exist_ok=True)
-
-# Выбор всех узлов изображений на странице
-image_html_nodes = driver.find_elements(By.TAG_NAME, "img")
-
-image_urls = []
-
-# Извлечение URL-адресов изображений
-for image_html_node in image_html_nodes:
-    try:
-        image_url = image_html_node.get_attribute("src")
-        if image_url and image_url.startswith("http"):
-            image_urls.append(image_url)
-    except StaleElementReferenceException:
-        continue
-
-# Добавляем заголовок User-Agent
-headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-}
-
-# Скачивание и сохранение изображений
-for index, image_url in enumerate(image_urls, start=1):
-    print(f"Скачивание изображения {index} ...")
-    file_name = os.path.join(SAVE_DIR, f"image_{index}.jpg")
-
-    try:
-        req = urllib.request.Request(image_url, headers=headers)
-        with urllib.request.urlopen(req) as response, open(file_name, "wb") as file:
-            file.write(response.read())
-
-        print(f"Изображение сохранено: {file_name}")
-
-    except HTTPError as e:
-        print(f"Ошибка при скачивании изображения {index}: {e}")
-
-# Закрытие браузера
-driver.quit()
+check = browser.find_element(By.ID, "input_value")
+x = check.text
+y = calc(x)
+input1 = browser.find_element(By.ID, "answer")
+input1.send_keys(y)
+button = browser.find_element(By.XPATH, '//button[text()="Submit"]')
+button.click()
+time.sleep(35)
